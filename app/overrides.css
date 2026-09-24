@@ -1,0 +1,10 @@
+.studio-stats{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+@media(max-width:760px){
+  .studio-compose-tools{align-items:stretch;flex-direction:column}
+  .studio-existing{max-width:none}
+  .studio-remove{align-self:flex-start}
+  .studio-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .studio-stats>div{border-bottom:1px solid var(--line)}
+  .studio-stats>div:nth-child(2n){border-right:0}
+  .studio-stats>div:nth-last-child(-n+2){border-bottom:0}
+}
