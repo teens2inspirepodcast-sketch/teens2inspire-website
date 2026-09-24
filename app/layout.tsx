@@ -5,7 +5,7 @@ import "./globals.css";
 import "./overrides.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://teens2inspire.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://teens2inspire-website.vercel.app"),
   title: { default: "Teens2Inspire | Inspiring Jewish teen girls.", template: "%s | Teens2Inspire" },
   description: "A space to listen, watch, explore, connect and grow together. Made especially for Jewish teen girls.",
   openGraph: { siteName: "Teens2Inspire", type: "website", title: "Teens2Inspire", description: "Inspiring Jewish teen girls." },

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ContentRecord, contentHref, contentLabel } from "@/lib/content";
+import { ExpandableDescription } from "@/components/ExpandableDescription";
 
 export function MediaCard({ item, compact = false }: { item: ContentRecord; compact?: boolean }) {
   return <article className={`media-card${compact ? " media-card-compact" : ""}`}>
@@ -8,6 +9,6 @@ export function MediaCard({ item, compact = false }: { item: ContentRecord; comp
       <span className="art-type">{contentLabel(item.type)}</span>
       <span className="art-open" aria-hidden="true">↗</span>
     </Link>
-    <div className="media-copy"><span className="eyebrow muted">{item.category || contentLabel(item.type)}</span><h3><Link href={contentHref(item)}>{item.title}</Link></h3>{item.description && <p>{item.description}</p>}</div>
+    <div className="media-copy"><span className="eyebrow muted">{item.category || contentLabel(item.type)}</span><h3><Link href={contentHref(item)}>{item.title}</Link></h3>{item.description && (item.type === "video" || item.type === "original" ? <ExpandableDescription text={item.description} label={item.title} /> : <p>{item.description}</p>)}</div>
   </article>;
 }
