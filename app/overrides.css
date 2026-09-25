@@ -97,3 +97,54 @@
   .studio-stats>div:nth-child(2n){border-right:0}
   .studio-stats>div:nth-last-child(-n+2){border-bottom:0}
 }
+
+/* Keep every video shelf compact and landscape, including search and saved pages. */
+.media-card-video,.media-card-original{min-width:0}
+.media-card-video .media-art,.media-card-original .media-art{height:auto;aspect-ratio:16/9}
+.media-card-video .media-art img,.media-card-original .media-art img{position:absolute;inset:0}
+.media-card-video .media-copy,.media-card-original .media-copy{padding-top:10px}
+.media-card-video .media-copy h3,.media-card-original .media-copy h3{font-size:17px;line-height:1.28}
+.media-lock{position:absolute;z-index:3;top:10px;left:10px;display:grid;width:25px;height:25px;place-items:center;border:1px solid rgba(255,255,255,.56);background:rgba(10,10,11,.76);color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.28)}
+.media-lock svg{width:12px;height:12px}
+.watch-feature-lock{top:15px;left:15px}
+.detail-video-layout{grid-template-columns:minmax(0,1fr);padding-bottom:22px}
+.detail-video-layout .detail-copy{max-width:850px}
+.detail-description.expandable-description{max-width:650px}
+.detail-description .expandable-description-text{color:#bfb5b1;font-size:13px;line-height:1.85}
+.detail-video-stage{width:min(100%,1050px);margin:0 auto 34px}
+.video-player{display:block;width:100%;max-width:none;max-height:none;aspect-ratio:16/9;margin:0;object-fit:contain}
+.video-access-gate,.video-unavailable{position:relative;isolation:isolate;display:grid;min-height:clamp(260px,55vw,590px);aspect-ratio:16/9;place-items:center;overflow:hidden;border:1px solid var(--line);background:radial-gradient(ellipse at 65% 35%,rgba(216,163,165,.18),transparent 42%),#171416;text-align:center}
+.video-access-gate:after{position:absolute;z-index:-1;inset:0;content:"";background:linear-gradient(90deg,rgba(14,12,14,.88),rgba(14,12,14,.48) 55%,rgba(14,12,14,.69))}
+.video-access-gate>img{position:absolute;z-index:-2;inset:0;width:100%;height:100%;object-fit:cover;opacity:.48}
+.video-access-gate>div{max-width:520px;padding:35px 24px}
+.video-access-gate h2,.video-unavailable strong{margin:11px 0 8px;font:500 clamp(30px,4vw,45px)/1.12 var(--serif)}
+.video-access-gate p,.video-unavailable p{margin:0 auto;color:#d2c6c2;font-size:11px;line-height:1.7}
+.video-gate-lock{top:17px;left:17px;width:30px;height:30px}
+.video-gate-lock svg{width:14px;height:14px}
+.video-gate-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px;margin-top:22px}
+.video-gate-actions .button{min-height:42px;font-size:9px}
+.video-gate-actions .text-link{font-size:9px}
+.video-unavailable{min-height:260px;aspect-ratio:16/9;padding:30px}
+.home-feature-description{max-width:430px;margin:8px 0 12px}
+.home-feature-description .expandable-description-text{color:#d2c6c2;font-size:11px;line-height:1.7}
+.signup-age-fieldset{margin-bottom:20px}
+.signup-age-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.signup-age-options label{display:flex;align-items:center;gap:9px;min-height:44px;padding:10px 12px;border:1px solid var(--line);background:rgba(10,10,11,.24);color:#d0c6c1;font-size:10px;cursor:pointer}
+.signup-age-options input{width:16px;height:16px;margin:0;accent-color:var(--rose)}
+.signup-age-options label:focus-within{border-color:var(--rose)}
+.signup-parent-consent{padding:12px 14px;border-left:2px solid var(--rose);background:rgba(216,163,165,.07);color:#dbc4c3;font-size:10px;line-height:1.7}
+.install-app-wrap{margin-top:14px}
+.install-app-button{padding:7px 0;border:0;background:transparent;color:#cfaaa9;font:500 9px/1.5 var(--sans);cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.install-app-button span{margin-left:7px}
+.install-app-help{max-width:290px;margin:7px 0 0;color:#a89e9a;font-size:9px;line-height:1.65}
+.studio-video-security-note{margin:0;color:#a89e9a;font-size:9px;line-height:1.65}
+.event-description{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.6}
+@media(max-width:760px){
+  .detail-video-layout{padding-top:28px}
+  .detail-video-layout .detail-copy h1{font-size:clamp(37px,10vw,48px)}
+  .video-access-gate{min-height:360px;aspect-ratio:auto}
+  .video-access-gate>div{padding:55px 22px 30px}
+  .video-gate-actions{flex-direction:column;gap:12px}
+  .video-unavailable{min-height:210px;aspect-ratio:auto}
+  .signup-age-options{grid-template-columns:1fr}
+}

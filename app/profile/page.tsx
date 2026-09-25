@@ -9,7 +9,8 @@ import { FamilyProfilesManager } from "@/components/FamilyProfilesManager";
 import { MembershipActionButton } from "@/components/MembershipActionButton";
 import { SchoolCodeForm } from "@/components/SchoolCodeForm";
 import { membershipOptions, isMembershipTier, type MembershipTier } from "@/lib/membership";
-import type { ContentRecord } from "@/lib/content";
+import { withMediaUrls, type ContentRecord } from "@/lib/content";
+import { getViewerAccess } from "@/lib/membership-access";
 
 export const metadata: Metadata = { title: "My profile" };
 
@@ -31,6 +32,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   if (!supabase) return <div className="empty-library page-shell"><h1>Your space is almost ready.</h1><p>Add your Supabase settings to get started.</p></div>;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const access = await getViewerAccess(supabase);
 
   const [profileResult, savedResult, historyResult] = await Promise.all([
     supabase.from("profiles").select("first_name,display_name,interests,avatar_path,membership_tier,membership_status,stripe_customer_id,membership_period_end,cancel_at_period_end").eq("id", user.id).maybeSingle(),
@@ -39,8 +41,8 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   ]);
 
   const profile = profileResult.error ? null : profileResult.data as ProfileDetails | null;
-  const favorites = (savedResult.data ?? []).map((row: any) => row.content).filter((item: any) => item?.status === "published") as ContentRecord[];
-  const viewed = (historyResult.data ?? []).map((row: any) => row.content).filter((item: any) => item?.status === "published") as ContentRecord[];
+  const favorites = (savedResult.data ?? []).map((row: any) => row.content).filter((item: any) => item?.status === "published").map((item: any) => withMediaUrls(item as ContentRecord));
+  const viewed = (historyResult.data ?? []).map((row: any) => row.content).filter((item: any) => item?.status === "published").map((item: any) => withMediaUrls(item as ContentRecord));
   const name = profile?.first_name || (typeof user.user_metadata?.first_name === "string" ? user.user_metadata.first_name : "friend");
   const tier: MembershipTier = isMembershipTier(profile?.membership_tier) ? profile.membership_tier : "personal";
   const membership = membershipOptions.find((option) => option.id === tier)!;
@@ -72,16 +74,16 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       <div className="section-heading"><div><span className="eyebrow">Your membership</span><h2 id="membership-heading">{membership.name}</h2></div><span className={`membership-status-pill membership-status-${status}`}>{status.replaceAll("_", " ")}</span></div>
       <p>{tier === "school" ? "Free access through your school." : `${membership.price} ${membership.cadence}${tier === "family" ? " · includes three profiles" : ""}`}</p>
       {isSchoolPending && <><p>Your school membership is free with a code from your school.</p><SchoolCodeForm /></>}
-      {tier === "school" && status === "active" && <p>Your school membership is active.</p>}
+      {tier === "school" && status === "active" && <><p>Your school membership is active. School codes do not unlock paid videos. Choose a paid plan to watch them.</p><div className="membership-plan-actions"><MembershipActionButton action="checkout" tier="personal" /><MembershipActionButton action="checkout" tier="family" /></div></>}
       {tier !== "school" && !isPaidActive && <><p>{status === "past_due" ? "There’s a payment update needed for your membership." : status === "canceled" ? "Your paid membership is no longer active." : "Finish setting up your membership to unlock your account."}</p><MembershipActionButton action={hasBillingAccount && status === "past_due" ? "portal" : "checkout"} /></>}
       {isPaidActive && <><p>{tier === "family" ? "Your family space includes three profiles in total." : "Your Teens2Inspire membership is active."}{profile?.membership_period_end ? ` Renews or ends ${new Date(profile.membership_period_end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}${profile.cancel_at_period_end ? " (canceled at period end)" : ""}.` : ""}</p><MembershipActionButton action="portal" /></>}
     </section>}
 
     {tier === "family" && status === "active" && <FamilyProfilesManager profiles={(familyProfiles ?? []) as { id: string; first_name: string; display_name: string; interests: string[] }[]} />}
 
-    <section className="profile-section"><div className="section-heading"><div><span className="eyebrow">Keep what speaks to you</span><h2>Saved for later</h2></div><Link className="text-link" href="/saved">See all <span>↗</span></Link></div>{favorites.length ? <div className="media-shelf">{favorites.map((item) => <MediaCard key={item.id} item={item} />)}</div> : <div className="empty-note"><span className="empty-sparkle">♡</span><div><strong>Your saved space is waiting.</strong><p>Save a podcast, video or resource to find it here later.</p></div><Link className="text-link" href="/listen">Find something <span>↗</span></Link></div>}</section>
+    <section className="profile-section"><div className="section-heading"><div><span className="eyebrow">Keep what speaks to you</span><h2>Saved for later</h2></div><Link className="text-link" href="/saved">See all <span>↗</span></Link></div>{favorites.length ? <div className="media-shelf">{favorites.map((item) => <MediaCard key={item.id} item={item} canWatchVideos={access.canWatchVideos} />)}</div> : <div className="empty-note"><span className="empty-sparkle">♡</span><div><strong>Your saved space is waiting.</strong><p>Save a podcast, video or resource to find it here later.</p></div><Link className="text-link" href="/listen">Find something <span>↗</span></Link></div>}</section>
 
-    <section className="profile-section"><div className="section-heading"><div><span className="eyebrow">Pick up where you left off</span><h2>Recently viewed</h2></div></div>{viewed.length ? <div className="media-shelf">{viewed.map((item) => <MediaCard key={item.id} item={item} />)}</div> : <div className="empty-note"><span className="empty-sparkle">↺</span><div><strong>Your recent finds will live here.</strong><p>Open a podcast, video or resource and it’ll be easy to find again.</p></div></div>}</section>
+    <section className="profile-section"><div className="section-heading"><div><span className="eyebrow">Pick up where you left off</span><h2>Recently viewed</h2></div></div>{viewed.length ? <div className="media-shelf">{viewed.map((item) => <MediaCard key={item.id} item={item} canWatchVideos={access.canWatchVideos} />)}</div> : <div className="empty-note"><span className="empty-sparkle">↺</span><div><strong>Your recent finds will live here.</strong><p>Open a podcast, video or resource and it’ll be easy to find again.</p></div></div>}</section>
 
     {profile && <section className="profile-section profile-settings-section"><div className="section-heading"><div><span className="eyebrow">Private to your account</span><h2>Account settings</h2></div></div><ProfileSettingsForm userId={user.id} email={user.email ?? ""} firstName={profile.first_name || name} displayName={displayName} interests={profile.interests ?? []} avatarUrl={photoData?.signedUrl ?? ""} /></section>}
   </div>;

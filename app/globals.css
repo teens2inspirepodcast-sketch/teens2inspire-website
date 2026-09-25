@@ -136,6 +136,7 @@
 .membership-status-active{border-color:rgba(152,186,151,.36);color:#b8c9ae}.membership-status-past_due{border-color:rgba(211,159,119,.4);color:#dfb88d}.membership-status-pending_payment,.membership-status-pending_school_code{border-color:rgba(216,163,165,.4);color:#e5b8b9}
 .profile-membership-notice,.profile-setup-note{padding:12px 14px;border-left:2px solid var(--rose);background:rgba(216,163,165,.07);color:#d7babb;font-size:10px;line-height:1.7}
 .membership-action-wrap{margin-top:14px}.membership-action-wrap .button,.membership-code-form .button{min-height:40px;font-size:9px}.membership-action-wrap .form-error{max-width:440px;margin-top:10px}
+.membership-plan-actions{display:flex;flex-wrap:wrap;gap:10px}.membership-plan-actions .membership-action-wrap{margin-top:8px}
 .membership-code-form{max-width:470px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:10px;margin-top:16px}
 .family-profile-section{padding-top:31px}.family-profile-section .section-heading{margin-bottom:8px}.family-profile-section h2{font:500 27px var(--serif)}
 .family-profile-note{max-width:700px;color:#a69c98;font-size:10px;line-height:1.7}

@@ -18,6 +18,7 @@ export async function POST(request: Request) {
   }
 
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const ageGroup = body.ageGroup;
   const password = typeof body.password === "string" ? body.password : "";
   const confirmPassword = typeof body.confirmPassword === "string" ? body.confirmPassword : "";
   const firstName = typeof body.firstName === "string" ? body.firstName.trim() : "";
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     : [];
   const interests = [...new Set(validInterests)].slice(0, membershipInterests.length);
 
+  if (ageGroup !== "13plus") return invalid("Under-13 sign-up needs verified parent or guardian consent. That setup isn’t available yet; please ask a parent or guardian to contact Teens2Inspire.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return invalid("Please enter a valid email address.");
   const requirements = passwordRequirements(password);
   if (!requirements.length || !requirements.number || !requirements.uppercase) return invalid("Use at least 8 characters, one number, and one uppercase letter for your password.");
@@ -67,8 +69,10 @@ export async function POST(request: Request) {
         display_name: displayName,
         interests,
         membership_tier: tier,
+        membership_plan: tier,
         ...(tier === "school" ? { school_code_hash: schoolCodeHash } : {}),
         accepted_terms_at: new Date().toISOString(),
+        age_group: "13plus",
       },
       emailRedirectTo: redirectTo,
     },

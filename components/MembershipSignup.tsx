@@ -15,11 +15,13 @@ type SignupValues = {
   schoolCode: string;
   interests: string[];
   acceptedTerms: boolean;
+  ageGroup: "" | "13plus" | "under13";
 };
 
 const initialValues: SignupValues = {
   email: "", password: "", confirmPassword: "", firstName: "", displayName: "",
   tier: "personal", schoolCode: "", interests: [], acceptedTerms: false,
+  ageGroup: "",
 };
 const stepNames = ["Account", "About you", "Interests", "Finish"];
 
@@ -39,6 +41,8 @@ export function MembershipSignup() {
 
   function validateCurrentStep() {
     if (step === 0) {
+      if (!values.ageGroup) return "Please choose the age range that applies before continuing.";
+      if (values.ageGroup === "under13") return "Under-13 sign-up needs verified parent or guardian consent. That setup isn’t available yet; please ask a parent or guardian to contact Teens2Inspire.";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) return "Please enter a valid email address.";
       const requirements = passwordRequirements(values.password);
       if (!requirements.length || !requirements.number || !requirements.uppercase) return "Your password needs at least 8 characters, one number, and one uppercase letter.";
@@ -155,6 +159,15 @@ export function MembershipSignup() {
       <form className="membership-form" noValidate onSubmit={step === 3 ? createAccount : advance}>
         {step === 0 && <section className="membership-step" aria-labelledby="step-title">
           <div className="membership-step-heading"><span className="eyebrow">01 — Account</span><h3 id="step-title">Let’s get started.</h3><p>Choose your membership and create your secure sign-in.</p></div>
+          <fieldset className="membership-plan-fieldset signup-age-fieldset">
+            <legend>First, which age range applies?</legend>
+            <div className="signup-age-options">
+              <label><input type="radio" name="ageGroup" checked={values.ageGroup === "13plus"} onChange={() => set("ageGroup", "13plus")} /><span>I am 13 or older</span></label>
+              <label><input type="radio" name="ageGroup" checked={values.ageGroup === "under13"} onChange={() => set("ageGroup", "under13")} /><span>I am under 13</span></label>
+            </div>
+          </fieldset>
+          {values.ageGroup === "under13" ? <p className="signup-parent-consent" role="status">A parent or guardian needs to complete verified consent before an under-13 account can be created. That service is not connected yet. Please ask a parent or guardian to <Link href="/contact">contact Teens2Inspire</Link>.</p> : null}
+          {values.ageGroup === "13plus" && <>
           <fieldset className="membership-plan-fieldset">
             <legend>Choose a membership</legend>
             <div className="membership-plan-grid">
@@ -175,6 +188,7 @@ export function MembershipSignup() {
             <div className={`strength-meter strength-${score}`}><i /><i /><i /></div><span>{score === 3 ? "Password looks good" : "Password requirements"}</span>
             <ul><li className={requirements.length ? "met" : ""}>At least 8 characters</li><li className={requirements.number ? "met" : ""}>At least one number</li><li className={requirements.uppercase ? "met" : ""}>At least one uppercase letter</li></ul>
           </div>
+          </>}
         </section>}
 
         {step === 1 && <section className="membership-step" aria-labelledby="step-title">
@@ -204,7 +218,7 @@ export function MembershipSignup() {
           {step > 0 ? <button className="membership-back" type="button" onClick={back}>← Back</button> : <span className="membership-secure-note"><span aria-hidden="true">✳</span> Private and secure</span>}
           {step === 2 && <button className="membership-skip" type="button" onClick={() => { setError(""); setStep(3); }}>Skip for now</button>}
           {step < 3
-            ? <button className="button button-primary" type="submit">Continue <span aria-hidden="true">→</span></button>
+            ? <button className="button button-primary" type="submit" disabled={step === 0 && values.ageGroup !== "13plus"}>Continue <span aria-hidden="true">→</span></button>
             : <button className="button button-primary" type="submit" disabled={busy}>{busy ? "Creating your account…" : "Join Teens2Inspire"}<span aria-hidden="true">↗</span></button>}
         </div>
       </form>

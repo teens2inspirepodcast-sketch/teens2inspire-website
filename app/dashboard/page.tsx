@@ -10,14 +10,14 @@ export default async function DashboardPage() {
   const supabase=await createClient(); if(!supabase) return <div className="empty-library page-shell"><h1>Teens2Inspire Studio</h1><p>Connect Supabase to open the publishing studio.</p></div>;
   const {data:{user}}=await supabase.auth.getUser(); if(!user) redirect("/login");
   const {data:profile}=await supabase.from("profiles").select("role, first_name").eq("id",user.id).maybeSingle();
-  if(!profile || !["administrator","content_editor","event_manager"].includes(profile.role)) redirect("/");
+  if(!profile || profile.role !== "administrator") redirect("/");
   const now=new Date().toISOString();
   const [{count:published},{count:drafts},{count:events},{data:recent},{data:messages},{count:messageCount},{data:userCount}] = await Promise.all([
     supabase.from("content").select("id",{count:"exact",head:true}).eq("status","published"),
     supabase.from("content").select("id",{count:"exact",head:true}).eq("status","draft"),
     supabase.from("content").select("id",{count:"exact",head:true}).eq("type","event").eq("status","published").gte("starts_at",now),
     supabase.from("content").select("id,title,type,status,created_at").order("created_at",{ascending:false}).limit(6),
-    profile.role === "administrator" ? supabase.from("messages").select("id,name,email,subject,message,created_at,is_read").order("created_at",{ascending:false}).limit(8) : Promise.resolve({data:[]}),
+    profile.role === "administrator" ? supabase.from("messages").select("id,name,email,subject,message,created_at,read").order("created_at",{ascending:false}).limit(8) : Promise.resolve({data:[]}),
     profile.role === "administrator" ? supabase.from("messages").select("id",{count:"exact",head:true}) : Promise.resolve({count:0}),
     profile.role === "administrator" ? supabase.rpc("studio_user_count") : Promise.resolve({data:null}),
   ]);

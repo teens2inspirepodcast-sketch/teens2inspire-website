@@ -26,12 +26,18 @@ export type ContentRecord = {
 };
 
 function resolveStoragePath(value: string | null) {
-  if (!value?.startsWith("storage://media/")) return value;
-  const path = value.slice("storage://media/".length).split("/").map(encodeURIComponent).join("/");
-  return `/api/media/${path}`;
+  if (value?.startsWith("r2://media/")) {
+    const path = value.slice("r2://".length).split("/").map(encodeURIComponent).join("/");
+    return `/api/media/r2/${path}`;
+  }
+  if (value?.startsWith("storage://media/")) {
+    const path = value.slice("storage://media/".length).split("/").map(encodeURIComponent).join("/");
+    return `/api/media/${path}`;
+  }
+  return value;
 }
 
-function withMediaUrls(item: ContentRecord): ContentRecord {
+export function withMediaUrls(item: ContentRecord): ContentRecord {
   return { ...item, cover_url: resolveStoragePath(item.cover_url), media_url: resolveStoragePath(item.media_url) };
 }
 
@@ -71,7 +77,7 @@ export async function getRelatedContent(item: ContentRecord): Promise<ContentRec
   if (item.tags?.length) query = query.overlaps("tags", item.tags);
   else if (item.category) query = query.eq("category", item.category);
   const { data } = await query.order("published_at", { ascending: false }).limit(4);
-  return (data ?? []) as ContentRecord[];
+  return ((data ?? []) as ContentRecord[]).map(withMediaUrls);
 }
 
 export function contentHref(item: Pick<ContentRecord, "slug">) {

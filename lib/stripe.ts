@@ -36,7 +36,7 @@ export function stripeStatusToMembershipStatus(status: Stripe.Subscription.Statu
   return "pending_payment" as const;
 }
 
-export async function createMemberCheckout(supabase: SupabaseClient, userId: string, email: string, origin: string) {
+export async function createMemberCheckout(supabase: SupabaseClient, userId: string, email: string, origin: string, requestedTier?: "personal" | "family") {
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("membership_tier,membership_status,stripe_customer_id")
@@ -44,17 +44,22 @@ export async function createMemberCheckout(supabase: SupabaseClient, userId: str
     .maybeSingle();
 
   if (profileError || !profile) return { error: "Your membership profile is not ready yet.", status: 503 as const };
-  if (profile.membership_tier !== "personal" && profile.membership_tier !== "family") {
-    return { error: "This membership does not need paid checkout.", status: 400 as const };
+  const tier = requestedTier ?? profile.membership_tier;
+  if (tier !== "personal" && tier !== "family") {
+    return { error: "Choose a paid Personal or Family plan to unlock videos.", status: 400 as const };
   }
-  if (profile.membership_status === "active") return { error: "Your membership is already active.", status: 409 as const };
-  if (profile.membership_status === "past_due") return { error: "Use Manage billing to update your payment method.", status: 409 as const };
-  if (!isMembershipBillingConfigured(profile.membership_tier)) {
+  const isAlreadyPaidAccount = profile.membership_tier === "personal" || profile.membership_tier === "family";
+  if (isAlreadyPaidAccount && requestedTier && requestedTier !== profile.membership_tier) {
+    return { error: "Manage billing to change your paid plan.", status: 409 as const };
+  }
+  if (isAlreadyPaidAccount && profile.membership_status === "active") return { error: "Your membership is already active.", status: 409 as const };
+  if (isAlreadyPaidAccount && profile.membership_status === "past_due") return { error: "Use Manage billing to update your payment method.", status: 409 as const };
+  if (!isMembershipBillingConfigured(tier)) {
     return { error: "Secure monthly checkout is not fully configured yet.", status: 503 as const };
   }
 
   const stripe = getStripe();
-  const priceId = stripePriceIdFor(profile.membership_tier);
+  const priceId = stripePriceIdFor(tier);
   const admin = createAdminClient();
   if (!stripe || !priceId || !admin) return { error: "Secure monthly checkout is not fully configured yet.", status: 503 as const };
 
@@ -79,7 +84,7 @@ export async function createMemberCheckout(supabase: SupabaseClient, userId: str
     const openSessions = await stripe.checkout.sessions.list({ customer: customerId, status: "open", limit: 100 });
     const matchingSession = openSessions.data.find((session) =>
       session.mode === "subscription" && session.metadata?.supabase_user_id === userId &&
-      session.metadata?.membership_tier === profile.membership_tier && session.url,
+      session.metadata?.membership_tier === tier && session.url,
     );
     if (matchingSession?.url) return { url: matchingSession.url };
     for (const session of openSessions.data) {
@@ -95,7 +100,7 @@ export async function createMemberCheckout(supabase: SupabaseClient, userId: str
     if (existingSubscription) return { error: "There is already a paid membership on this account. Refresh your profile or manage billing.", status: 409 as const };
 
     const price = await stripe.prices.retrieve(priceId);
-    const expectedAmount = profile.membership_tier === "personal" ? 799 : 999;
+    const expectedAmount = tier === "personal" ? 799 : 999;
     if (!price.active || price.currency !== "usd" || price.unit_amount !== expectedAmount || price.recurring?.interval !== "month") {
       return { error: "The monthly membership prices need to be checked in Stripe before checkout can start.", status: 503 as const };
     }
@@ -104,11 +109,11 @@ export async function createMemberCheckout(supabase: SupabaseClient, userId: str
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: userId,
       customer: customerId,
-      metadata: { supabase_user_id: userId, membership_tier: profile.membership_tier },
-      subscription_data: { metadata: { supabase_user_id: userId, membership_tier: profile.membership_tier } },
+      metadata: { supabase_user_id: userId, membership_tier: tier },
+      subscription_data: { metadata: { supabase_user_id: userId, membership_tier: tier } },
       success_url: new URL("/membership/success", origin).toString(),
       cancel_url: new URL("/profile?membership=checkout-canceled", origin).toString(),
-    }, { idempotencyKey: `teens2inspire-checkout-${userId}-${profile.membership_tier}-${Math.floor(Date.now() / 300000)}` });
+    }, { idempotencyKey: `teens2inspire-checkout-${userId}-${tier}-${Math.floor(Date.now() / 300000)}` });
     if (!session.url) return { error: "Stripe did not return a checkout link. Please try again.", status: 503 as const };
     return { url: session.url };
   } catch {
